@@ -17,6 +17,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -24,6 +25,7 @@ import com.juan.tenerifeenunclick.gui.PantallaCrearCuenta
 import com.juan.tenerifeenunclick.gui.PantallaInicial
 import com.juan.tenerifeenunclick.gui.PantallaIniciarSesion
 import com.juan.tenerifeenunclick.gui.PantallaPrincipal
+import com.juan.tenerifeenunclick.viewModel.ViewModelInicial
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,13 +38,13 @@ fun GrafoNavegacion() {
         startDestination = Rutas.Inicial.ruta
     ) {
         composable("inicial") {
-            PantallaInicial(navController = navController)
+            PantallaInicial(navController)
         }
         composable("crearCuenta") {
-            PantallaCrearCuenta(navController = navController)
+            PantallaCrearCuenta(navController)
         }
         composable("iniciarSesion") {
-            PantallaIniciarSesion(navController = navController)
+            PantallaIniciarSesion(navController)
         }
         composable("principal") {
             PantallaPrincipal(drawerState)

@@ -22,6 +22,7 @@ val lime_Green = Color(0xF205A63A)
 val neon_Green = Color(0xFFA1F7A1)
 val mint = Color(0xFFA6E8BB)
 val fondo = Color(0xFFB6D866)
+val fondoTextField = Color(0xFFD2EF8E)
 
 val teal_200 = Color(0xFF03DAC5)
 val teal_700 = Color(0xFF018786)
