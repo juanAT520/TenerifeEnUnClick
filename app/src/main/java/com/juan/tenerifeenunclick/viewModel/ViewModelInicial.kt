@@ -5,8 +5,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class ViewModelInicial : ViewModel() {
-    private val _dialogoAbierto = MutableStateFlow(false)
-    val dialogoAbierto = _dialogoAbierto.asStateFlow()
+    private val _dialogoCrearUsuario = MutableStateFlow(false)
+    val dialogoCrearUsuario = _dialogoCrearUsuario.asStateFlow()
+    private val _dialogoIniciarSesion = MutableStateFlow(false)
+    val dialogoIniciarSesion = _dialogoIniciarSesion.asStateFlow()
     private val _elementosDeFondo = MutableStateFlow(true)
     val elementosDeFondo = _elementosDeFondo.asStateFlow()
     private val _textoNombre = MutableStateFlow("")
@@ -20,8 +22,13 @@ class ViewModelInicial : ViewModel() {
     private val _textoRepitePassword = MutableStateFlow("")
     val textoRepitePassword = _textoRepitePassword.asStateFlow()
 
-    fun abrirDialogo() {
-        _dialogoAbierto.value = !_dialogoAbierto.value
+    fun abrirCrearUsuario() {
+        _dialogoCrearUsuario.value = !_dialogoCrearUsuario.value
+        _elementosDeFondo.value = !_elementosDeFondo.value
+    }
+
+    fun abrirIniciarSesion() {
+        _dialogoIniciarSesion.value = !_dialogoIniciarSesion.value
         _elementosDeFondo.value = !_elementosDeFondo.value
     }
 

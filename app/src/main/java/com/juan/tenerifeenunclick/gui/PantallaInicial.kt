@@ -1,7 +1,10 @@
 package com.juan.tenerifeenunclick.gui
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,9 +27,15 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,80 +59,67 @@ import com.juan.tenerifeenunclick.viewModel.ViewModelInicial
 @Composable
 fun PantallaInicial(navController: NavHostController) {
     val miViewModel: ViewModelInicial = viewModel()
-    val estaAbierto = miViewModel.dialogoAbierto.collectAsState().value
-    Surface(
+    val dialogoCrearUsuario = miViewModel.dialogoCrearUsuario.collectAsState().value
+    val dialogoIniciarSesion = miViewModel.dialogoIniciarSesion.collectAsState().value
+    val colors = arrayOf(0.65f to Color(0xFFB6D866), 1.0f to Color(0xFF5D8D32))
+    Box(
         modifier = Modifier
-            .fillMaxSize(),
-        color = fondo
-    ) {
-        if (miViewModel.elementosDeFondo.value) {
+            .fillMaxSize()
+            .background(Brush.verticalGradient(colorStops = colors))
+    )
+    // Probando animaciones. Esto es un contenedor en el que si ahora mismo encapsulo el contenido del siguiente if hará una animación al cambiar el estado de dialogoCrearUsuario
+    //AnimatedVisibility(!dialogoCrearUsuario) {}
+    if (miViewModel.elementosDeFondo.value) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.padding(25.dp)
+        ) {
+            Logotipo()
+            Text(
+                text = "En esta isla de Canarias las aventuras no terminan, desde perderte por los montes de Anaga a hacer windsurf en el acogedor pueblo del Médano. \n" +
+                        "\n" +
+                        "Crea tu cuenta de usuario para descubrir todo lo que te ofrece.",
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.W500,
+                color = colorFuente
+            )
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly,
-                modifier = Modifier.padding(25.dp)
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(0.dp, 8.dp)
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Forest,
-                        contentDescription = "Icono Árboles",
-                        modifier = Modifier.size(60.dp),
-                        tint = autumn_foliage
-                    )
-                    Text(
-                        text = "Tenerife en un Click",
-                        textAlign = TextAlign.Center,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colorFuente
-                    )
-                }
-                Text(
-                    text = "En esta isla de Canarias las aventuras no terminan, desde perderte por los montes de Anaga a hacer windsurf en el acogedor pueblo del Médano. \n" +
-                            "\n" +
-                            "Crea tu cuenta de usuario para descubrir todo lo que te ofrece.",
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.W500,
-                    color = colorFuente
+                Button(
+                    onClick = { miViewModel.abrirCrearUsuario() },
+                    colors = ButtonDefaults.buttonColors(colorBoton),
+                    shape = RoundedCornerShape(20.dp), // siguiendo las normas de material design ;)
+                    content = {
+                        Text(
+                            text = "Crear cuenta",
+                            fontSize = 25.sp,
+                            color = colorFuenteBoton
+                        )
+                    }
                 )
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(0.dp, 8.dp)
-                ) {
-                    Button(
-                        onClick = { miViewModel.abrirDialogo() },
-                        colors = ButtonDefaults.buttonColors(colorBoton),
-                        shape = RoundedCornerShape(20.dp), // siguiendo las normas de material design ;)
-                        content = {
-                            Text(
-                                text = "Crear cuenta",
-                                fontSize = 25.sp,
-                                color = colorFuenteBoton
-                            )
-                        }
-                    )
-                    TextButton(
-                        onClick = { navController.navigate(Rutas.IniciarSesion.ruta) },
-                        modifier = Modifier.padding(8.dp),
-                        content = {
-                            Text(
-                                text = "Iniciar sesión",
-                                fontSize = 20.sp,
-                                color = colorFuenteBoton
-                            )
-                        }
-                    )
-                }
+                TextButton(
+                    onClick = { miViewModel.abrirIniciarSesion() },
+                    modifier = Modifier.padding(8.dp),
+                    content = {
+                        Text(
+                            text = "Iniciar sesión",
+                            fontSize = 20.sp,
+                            color = colorBoton
+                        )
+                    }
+                )
             }
         }
-        if (estaAbierto) DialogoCrearUsuario(miViewModel)
     }
+
+    if (dialogoCrearUsuario) DialogoCrearUsuario(miViewModel)
+    if (dialogoIniciarSesion) DialogoIniciarSesion(miViewModel)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 private fun DialogoCrearUsuario(miViewModel: ViewModelInicial) {
@@ -133,84 +129,49 @@ private fun DialogoCrearUsuario(miViewModel: ViewModelInicial) {
     val textoPassword = miViewModel.textoPassword.collectAsState().value
     val textoRepitePassword = miViewModel.textoRepitePassword.collectAsState().value
     Dialog(
-        onDismissRequest = { miViewModel.abrirDialogo() },
+        onDismissRequest = { miViewModel.abrirCrearUsuario() },
         properties = DialogProperties(decorFitsSystemWindows = true)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                (LocalView.current.parent as? DialogWindowProvider)?.window?.setDimAmount(0.15f)
-                Icon(
-                    imageVector = Icons.Rounded.Forest,
-                    contentDescription = "Icono Árboles",
-                    modifier = Modifier.size(60.dp),
-                    tint = autumn_foliage
-                )
-                Text(
-                    text = "Tenerife en un Click",
-                    textAlign = TextAlign.Center,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colorFuente
-                )
-            }
+            (LocalView.current.parent as? DialogWindowProvider)?.window?.setDimAmount(0.05f)
+            Logotipo()
             Texto(text = "Nombre completo")
             CampoDeTexto(textoNombre) { nuevoTexto -> miViewModel.actualizaNombre(nuevoTexto) }
             Texto(text = "Dirección de email")
             CampoDeTexto(texto = textoEmail) { nuevoTexto -> miViewModel.actualizaEmail(nuevoTexto) }
             Texto(text = "Nombre de usuario")
-            CampoDeTexto(texto = textoNombreUsuario) { nuevoTexto ->
-                miViewModel.actualizaNombreUsuario(
-                    nuevoTexto
-                )
-            }
+            CampoDeTexto(texto = textoNombreUsuario) { nuevoTexto -> miViewModel.actualizaNombreUsuario(nuevoTexto) }
             Texto(text = "Contraseña")
-            CampoDeTexto(texto = textoPassword) { nuevoTexto ->
-                miViewModel.actualizaPassword(
-                    nuevoTexto
-                )
-            }
+            CampoDeTexto(texto = textoPassword) { nuevoTexto -> miViewModel.actualizaPassword(nuevoTexto) }
             Texto(text = "Repite la contraseña")
-            CampoDeTexto(texto = textoRepitePassword) { nuevoTexto ->
-                miViewModel.actualizaPasswordOtraVez(
-                    nuevoTexto
-                )
-            }
-            Button(
-                onClick = { miViewModel.abrirDialogo() },
-                colors = ButtonDefaults.buttonColors(colorBoton),
-                shape = RoundedCornerShape(20.dp), // siguiendo las normas de material design ;)
-                content = {
-                    Text(
-                        text = "Crear cuenta",
-                        fontSize = 25.sp,
-                        color = colorFuenteBoton
-                    )
-                },
-                modifier = Modifier.padding(top = 20.dp)
-            )
-            IconButton(
-                onClick = { miViewModel.abrirDialogo() },
-                modifier = Modifier.fillMaxWidth(),
-                content = {
-                    Row {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = "Icono Árboles",
-                            tint = colorBoton
-                        )
-                        Text(
-                            text = "Volver",
-                            color = colorBoton
-                        )
-                    }
-                }
-            )
+            CampoDeTexto(texto = textoRepitePassword) { nuevoTexto -> miViewModel.actualizaPasswordOtraVez(nuevoTexto) }
+            BotonesSesion(texto1 = "Crear cuenta") { miViewModel.abrirCrearUsuario() }
+        }
+    }
+}
+
+@Composable
+private fun DialogoIniciarSesion(miViewModel: ViewModelInicial) {
+    val textoNombreUsuario = miViewModel.textoNombreUsuario.collectAsState().value
+    val textoPassword = miViewModel.textoPassword.collectAsState().value
+    Dialog(
+        onDismissRequest = { miViewModel.abrirIniciarSesion() },
+        properties = DialogProperties(decorFitsSystemWindows = true)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            (LocalView.current.parent as? DialogWindowProvider)?.window?.setDimAmount(0.05f)
+            Logotipo()
+            Texto(text = "Nombre de usuario")
+            CampoDeTexto(texto = textoNombreUsuario) { nuevoTexto -> miViewModel.actualizaNombreUsuario(nuevoTexto) }
+            Texto(text = "Contraseña")
+            CampoDeTexto(texto = textoPassword) { nuevoTexto -> miViewModel.actualizaPassword(nuevoTexto) }
+            BotonesSesion(texto1 = "Iniciar sesión") { miViewModel.abrirIniciarSesion() }
         }
     }
 }
@@ -235,5 +196,62 @@ private fun CampoDeTexto(texto: String, accion: (String) -> Unit) {
         singleLine = true,
         shape = RoundedCornerShape(20.dp),
         colors = TextFieldDefaults.textFieldColors(containerColor = fondoTextField)
+    )
+}
+
+@Composable
+fun Logotipo() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Forest,
+            contentDescription = "Icono Árboles",
+            modifier = Modifier.size(60.dp),
+            tint = autumn_foliage
+        )
+        Text(
+            text = "Tenerife en un Click",
+            textAlign = TextAlign.Center,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            color = colorFuente
+        )
+    }
+}
+
+@Composable
+fun BotonesSesion(texto1: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(colorBoton),
+        shape = RoundedCornerShape(20.dp), // siguiendo las normas de material design ;)
+        content = {
+            Text(
+                text = texto1,
+                fontSize = 25.sp,
+                color = colorFuenteBoton
+            )
+        },
+        modifier = Modifier.padding(top = 20.dp)
+    )
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        content = {
+            Row (verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowBack,
+                    contentDescription = "Icono volver",
+                    tint = colorBoton
+                )
+                Text(
+                    text = "Volver",
+                    fontSize = 20.sp,
+                    color = colorBoton
+                )
+            }
+        }
     )
 }
