@@ -1,7 +1,6 @@
 package com.juan.tenerifeenunclick.gui
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,20 +19,14 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
@@ -46,12 +39,11 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.juan.tenerifeenunclick.navigation.Rutas
+import com.juan.tenerifeenunclick.navigation.Ruta
 import com.juan.tenerifeenunclick.ui.theme.autumn_foliage
 import com.juan.tenerifeenunclick.ui.theme.colorBoton
 import com.juan.tenerifeenunclick.ui.theme.colorFuente
 import com.juan.tenerifeenunclick.ui.theme.colorFuenteBoton
-import com.juan.tenerifeenunclick.ui.theme.fondo
 import com.juan.tenerifeenunclick.ui.theme.fondoTextField
 import com.juan.tenerifeenunclick.viewModel.ViewModelInicial
 
@@ -61,19 +53,22 @@ fun PantallaInicial(navController: NavHostController) {
     val miViewModel: ViewModelInicial = viewModel()
     val dialogoCrearUsuario = miViewModel.dialogoCrearUsuario.collectAsState().value
     val dialogoIniciarSesion = miViewModel.dialogoIniciarSesion.collectAsState().value
-    val colors = arrayOf(0.65f to Color(0xFFB6D866), 1.0f to Color(0xFF5D8D32))
+    val colorDeFondo = arrayOf(0.65f to Color(0xFFB6D866), 1.0f to Color(0xFF5D8D32))
+
+    // Probando animaciones. Esto es un contenedor en el que si ahora mismo encapsulo el contenido del siguiente if hará una animación al cambiar el estado de dialogoCrearUsuario
+    //AnimatedVisibility(!dialogoCrearUsuario) {}
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(colorStops = colors))
+            .background(Brush.verticalGradient(colorStops = colorDeFondo))
     )
-    // Probando animaciones. Esto es un contenedor en el que si ahora mismo encapsulo el contenido del siguiente if hará una animación al cambiar el estado de dialogoCrearUsuario
-    //AnimatedVisibility(!dialogoCrearUsuario) {}
     if (miViewModel.elementosDeFondo.value) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.padding(25.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(25.dp)
         ) {
             Logotipo()
             Text(
@@ -116,13 +111,13 @@ fun PantallaInicial(navController: NavHostController) {
         }
     }
 
-    if (dialogoCrearUsuario) DialogoCrearUsuario(miViewModel)
-    if (dialogoIniciarSesion) DialogoIniciarSesion(miViewModel)
+    if (dialogoCrearUsuario) DialogoCrearUsuario(miViewModel, navController)
+    if (dialogoIniciarSesion) DialogoIniciarSesion(miViewModel, navController)
 }
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
-private fun DialogoCrearUsuario(miViewModel: ViewModelInicial) {
+private fun DialogoCrearUsuario(miViewModel: ViewModelInicial, navController: NavHostController) {
     val textoNombre = miViewModel.textoNombre.collectAsState().value
     val textoEmail = miViewModel.textoEmail.collectAsState().value
     val textoNombreUsuario = miViewModel.textoNombreUsuario.collectAsState().value
@@ -148,13 +143,13 @@ private fun DialogoCrearUsuario(miViewModel: ViewModelInicial) {
             CampoDeTexto(texto = textoPassword) { nuevoTexto -> miViewModel.actualizaPassword(nuevoTexto) }
             Texto(text = "Repite la contraseña")
             CampoDeTexto(texto = textoRepitePassword) { nuevoTexto -> miViewModel.actualizaPasswordOtraVez(nuevoTexto) }
-            BotonesSesion(texto1 = "Crear cuenta") { miViewModel.abrirCrearUsuario() }
+            BotonesSesion(texto1 = "Crear cuenta", navigate = { navController.navigate(Ruta.Principal.ruta) }) { miViewModel.abrirCrearUsuario() }
         }
     }
 }
 
 @Composable
-private fun DialogoIniciarSesion(miViewModel: ViewModelInicial) {
+private fun DialogoIniciarSesion(miViewModel: ViewModelInicial, navController: NavHostController) {
     val textoNombreUsuario = miViewModel.textoNombreUsuario.collectAsState().value
     val textoPassword = miViewModel.textoPassword.collectAsState().value
     Dialog(
@@ -171,7 +166,7 @@ private fun DialogoIniciarSesion(miViewModel: ViewModelInicial) {
             CampoDeTexto(texto = textoNombreUsuario) { nuevoTexto -> miViewModel.actualizaNombreUsuario(nuevoTexto) }
             Texto(text = "Contraseña")
             CampoDeTexto(texto = textoPassword) { nuevoTexto -> miViewModel.actualizaPassword(nuevoTexto) }
-            BotonesSesion(texto1 = "Iniciar sesión") { miViewModel.abrirIniciarSesion() }
+            BotonesSesion(texto1 = "Iniciar sesión", navigate = { navController.navigate(Ruta.Principal.ruta) }) { miViewModel.abrirIniciarSesion() }
         }
     }
 }
@@ -222,9 +217,12 @@ fun Logotipo() {
 }
 
 @Composable
-fun BotonesSesion(texto1: String, onClick: () -> Unit) {
+fun BotonesSesion(texto1: String, navigate: () -> Unit, onClick: () -> Unit) {
     Button(
-        onClick = onClick,
+        onClick = {
+                navigate()
+                onClick()
+        },
         colors = ButtonDefaults.buttonColors(colorBoton),
         shape = RoundedCornerShape(20.dp), // siguiendo las normas de material design ;)
         content = {

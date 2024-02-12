@@ -19,7 +19,7 @@ val colorPrimarioSistema = Color(0xFF3A753D)
 
 val colorFuenteBoton = Color(0xFF386641)
 val lime_Green = Color(0xF205A63A)
-val neon_Green = Color(0xFFA1F7A1)
+val fondoMenu = Color(0xFF5D8D32)
 val mint = Color(0xFFA6E8BB)
 val fondo = Color(0xFFB6D866)
 val fondoTextField = Color(0xFFD2EF8E)

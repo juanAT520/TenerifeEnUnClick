@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "44326508535",
+    "project_id": "frutas-974fc",
+    "storage_bucket": "frutas-974fc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:44326508535:android:3dbaf1d096121df51040f2",
+        "android_client_info": {
+          "package_name": "com.juan.cosadefirebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGahI4QMnXjLsL1ghp_CgBLQjXf_PbzUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:44326508535:android:211a6c9e9dec97a61040f2",
+        "android_client_info": {
+          "package_name": "com.juan.tenerifeenunclick"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGahI4QMnXjLsL1ghp_CgBLQjXf_PbzUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
