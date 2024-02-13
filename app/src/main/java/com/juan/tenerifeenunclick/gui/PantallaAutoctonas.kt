@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.juan.tenerifeenunclick.ui.theme.colorBoton
+import com.juan.tenerifeenunclick.ui.theme.colorFuente
 import com.juan.tenerifeenunclick.viewModel.ViewModelAutoctonas
 
 @Composable
@@ -56,7 +57,7 @@ fun PantallaAutoctonas(){
         verticalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
             .fillMaxSize()
-            .padding(25.dp)
+            .padding(25.dp, 0.dp)
     ) {
         LogotipoChato()
         LazyColumn() {
@@ -87,52 +88,55 @@ private fun TarjetaPlanta(
             .clip(RoundedCornerShape(20.dp))
     ) {
         Surface(color = colorBoton) {
-                Column(
-                    Modifier
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(paddingAnimado.value)
+                    .animateContentSize(
+                        animationSpec = tween(400, easing = EaseInExpo)
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        expanded.value = !expanded.value
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(id = imagen),
+                    contentDescription = "imagen $nombre",
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .padding(paddingAnimado.value)
-                        .animateContentSize(
-                            animationSpec = tween(400, easing = EaseInExpo)
-                        )
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            expanded.value = !expanded.value
-                        },
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Image(
-                        painter = painterResource(id = imagen),
-                        contentDescription = "imagen $nombre",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(20.dp))
-                    )
+                        .clip(RoundedCornerShape(20.dp))
+                )
+                Text(
+                    text = nombre,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    fontSize = 15.sp,
+                    color = colorFuente,
+                    modifier = Modifier.padding(0.dp, 10.dp)
+                )
+                Text(
+                    text = nombreC,
+                    fontStyle = FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                    fontSize = 14.sp,
+                    color = colorFuente,
+                    modifier = Modifier.padding(0.dp, 10.dp)
+                )
+                if (!expanded.value) {
                     Text(
-                        text = nombre,
-                        fontWeight = FontWeight.Bold,
+                        text = descripcion,
+                        fontWeight = FontWeight.Light,
                         textAlign = TextAlign.Center,
-                        fontSize = 15.sp,
-                        modifier = Modifier.padding(0.dp, 10.dp)
+                        fontSize = 11.sp,
+                        color = colorFuente,
+                        modifier = Modifier.padding(20.dp, 10.dp)
                     )
-                    Text(
-                        text = nombreC,
-                        fontStyle = FontStyle.Italic,
-                        textAlign = TextAlign.Center,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(0.dp, 10.dp)
-                    )
-                    if (!expanded.value) {
-                        Text(
-                            text = descripcion,
-                            fontWeight = FontWeight.Light,
-                            textAlign = TextAlign.Center,
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(20.dp, 10.dp)
-                        )
-                    }
                 }
+            }
         }
     }
 }

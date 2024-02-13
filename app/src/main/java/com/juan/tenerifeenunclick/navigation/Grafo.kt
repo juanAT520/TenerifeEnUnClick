@@ -46,6 +46,7 @@ import com.juan.tenerifeenunclick.gui.PantallaRecreativas
 import com.juan.tenerifeenunclick.gui.PantallaRutas
 import com.juan.tenerifeenunclick.ui.theme.autumn_foliage
 import com.juan.tenerifeenunclick.ui.theme.colorBoton
+import com.juan.tenerifeenunclick.ui.theme.colorBotonMenu
 import com.juan.tenerifeenunclick.ui.theme.colorFuenteBoton
 import com.juan.tenerifeenunclick.ui.theme.colorPrimarioSistema
 import com.juan.tenerifeenunclick.ui.theme.fondo
@@ -122,8 +123,8 @@ fun GrafoNavegacion() {
                 content = {
                     Surface(
                         shape = CircleShape,
-                        color = colorBoton,
-                        shadowElevation = 4.dp,
+                        color = colorBotonMenu,
+                        shadowElevation = 8.dp,
                         content = {
                             Icon(
                                 imageVector = Icons.Rounded.Menu,

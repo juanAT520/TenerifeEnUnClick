@@ -81,7 +81,9 @@ fun PantallaPrincipal() {
 @Composable
 fun LogotipoChato() {
     Box(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 20.dp)
     ) {
         Icon(
             imageVector = Icons.Rounded.Forest,

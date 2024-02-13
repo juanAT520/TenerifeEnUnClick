@@ -12,6 +12,7 @@ val chili_Pepper = Color(0xFFDF362D)
 val red_Orange = Color(0xFFFF4500)
 val orange = Color(0xFFFF8300)
 val colorBoton = Color(0xFFF2E8CF)
+val colorBotonMenu = Color(0xFFFFE9CE)
 
 val Danger = Color(0xFFFD0606)
 val Caution = Color(0xFFFF5722)
