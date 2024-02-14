@@ -7,7 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.toObject
 import com.juan.tenerifeenunclick.R
-import com.juan.tenerifeenunclick.`class`.Autoctonas
+import com.juan.tenerifeenunclick.entity.Autoctonas
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 

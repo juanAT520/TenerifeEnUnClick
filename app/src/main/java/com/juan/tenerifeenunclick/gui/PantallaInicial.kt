@@ -50,9 +50,9 @@ import com.juan.tenerifeenunclick.viewModel.ViewModelInicial
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun PantallaInicial(navController: NavHostController) {
-    val miViewModel: ViewModelInicial = viewModel()
-    val dialogoCrearUsuario = miViewModel.dialogoCrearUsuario.collectAsState().value
-    val dialogoIniciarSesion = miViewModel.dialogoIniciarSesion.collectAsState().value
+    val viewModelInicial: ViewModelInicial = viewModel()
+    val dialogoCrearUsuario = viewModelInicial.dialogoCrearUsuario.collectAsState().value
+    val dialogoIniciarSesion = viewModelInicial.dialogoIniciarSesion.collectAsState().value
     val colorDeFondo = arrayOf(0.65f to Color(0xFFB6D866), 1.0f to Color(0xFF5D8D32))
 
     // Probando animaciones. Esto es un contenedor en el que si ahora mismo encapsulo el contenido del siguiente if hará una animación al cambiar el estado de dialogoCrearUsuario
@@ -62,7 +62,7 @@ fun PantallaInicial(navController: NavHostController) {
             .fillMaxSize()
             .background(Brush.verticalGradient(colorStops = colorDeFondo))
     )
-    if (miViewModel.elementosDeFondo.value) {
+    if (viewModelInicial.elementosDeFondo.value) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceEvenly,
@@ -85,7 +85,7 @@ fun PantallaInicial(navController: NavHostController) {
                 modifier = Modifier.padding(0.dp, 8.dp)
             ) {
                 Button(
-                    onClick = { miViewModel.abrirCrearUsuario() },
+                    onClick = { viewModelInicial.abrirCrearUsuario() },
                     colors = ButtonDefaults.buttonColors(colorBoton),
                     shape = RoundedCornerShape(20.dp), // siguiendo las normas de material design ;)
                     content = {
@@ -97,7 +97,7 @@ fun PantallaInicial(navController: NavHostController) {
                     }
                 )
                 TextButton(
-                    onClick = { miViewModel.abrirIniciarSesion() },
+                    onClick = { viewModelInicial.abrirIniciarSesion() },
                     modifier = Modifier.padding(8.dp),
                     content = {
                         Text(
@@ -111,8 +111,8 @@ fun PantallaInicial(navController: NavHostController) {
         }
     }
 
-    if (dialogoCrearUsuario) DialogoCrearUsuario(miViewModel, navController)
-    if (dialogoIniciarSesion) DialogoIniciarSesion(miViewModel, navController)
+    if (dialogoCrearUsuario) DialogoCrearUsuario(viewModelInicial, navController)
+    if (dialogoIniciarSesion) DialogoIniciarSesion(viewModelInicial, navController)
 }
 
 @SuppressLint("StateFlowValueCalledInComposition")
@@ -184,7 +184,7 @@ private fun Texto(text: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CampoDeTexto(texto: String, accion: (String) -> Unit) {
+fun CampoDeTexto(texto: String, accion: (String) -> Unit) {
     TextField(
         value = texto,
         onValueChange = accion,

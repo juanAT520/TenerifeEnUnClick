@@ -12,6 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TenerifeEnUnClick"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCsDY7slpvk73pzQ-G_4DU9uzmvykmoryA">
+        </meta-data>
         <activity
             android:name=".MainActivity"
             android:exported="true"

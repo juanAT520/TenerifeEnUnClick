@@ -1,15 +1,13 @@
 package com.juan.tenerifeenunclick.viewModel
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.traceEventEnd
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.toObject
 import com.juan.tenerifeenunclick.R
-import com.juan.tenerifeenunclick.`class`.Camino
+import com.juan.tenerifeenunclick.entity.Camino
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -30,7 +28,7 @@ class ViewModelRutas: ViewModel() {
     val textoDesc = _textoDesc.asStateFlow()
     private val _imagenRuta = MutableStateFlow(R.drawable.imagenrutas)
     val imagenRuta = _imagenRuta.asStateFlow()
-    private val _codigoRuta = MutableStateFlow("")
+    private val _codigoRuta = MutableStateFlow("Selecciona una ruta")
     val codigoRuta = _codigoRuta.asStateFlow()
     private val _altitudRuta = MutableStateFlow(0.0)
     val altitudRuta = _altitudRuta.asStateFlow()

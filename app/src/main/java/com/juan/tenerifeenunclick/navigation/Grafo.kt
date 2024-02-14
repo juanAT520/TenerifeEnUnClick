@@ -1,5 +1,6 @@
 package com.juan.tenerifeenunclick.navigation
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,9 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -58,6 +59,7 @@ import kotlinx.coroutines.launch
 fun GrafoNavegacion() {
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
+    val context = LocalContext.current
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val colorDeFondo = arrayOf(0.65f to Color(0xFFB6D866), 1.0f to Color(0xFF5D8D32))
     // Obtener la ruta actual del navController
@@ -103,7 +105,7 @@ fun GrafoNavegacion() {
                     }
                 },
                 content = {
-                    RutasNavHost(navController, scope, drawerState)
+                    RutasNavHost(navController, scope, drawerState, context)
                 }
             )
             IconButton(
@@ -140,7 +142,7 @@ fun GrafoNavegacion() {
             )
         }
     } else {
-        RutasNavHost(navController, scope, drawerState)
+        RutasNavHost(navController, scope, drawerState, context)
     }
 }
 
@@ -149,7 +151,8 @@ fun GrafoNavegacion() {
 fun RutasNavHost(
     navController: NavHostController,
     scope: CoroutineScope,
-    drawerState: DrawerState
+    drawerState: DrawerState,
+    context: Context
 ) {
     NavHost(
         navController = navController,

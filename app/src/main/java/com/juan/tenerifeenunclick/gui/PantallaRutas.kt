@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -123,7 +121,7 @@ fun PantallaRutas() {
                 color = colorFuente,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 15.dp, bottom = 15.dp)
+                    .padding(15.dp, 10.dp)
             )
         }
         Text(text = textoDescripcion,

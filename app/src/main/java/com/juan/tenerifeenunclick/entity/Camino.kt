@@ -1,6 +1,4 @@
-package com.juan.tenerifeenunclick.`class`
-
-import com.google.firebase.firestore.Exclude
+package com.juan.tenerifeenunclick.entity
 
 data class Camino(
     val AltitudMaxima: Double = 0.0,
