@@ -1,6 +1,7 @@
 package com.juan.tenerifeenunclick.gui
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,8 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Forest
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +26,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -54,6 +60,11 @@ fun PantallaInicial(navController: NavHostController) {
     val dialogoCrearUsuario = viewModelInicial.dialogoCrearUsuario.collectAsState().value
     val dialogoIniciarSesion = viewModelInicial.dialogoIniciarSesion.collectAsState().value
     val colorDeFondo = arrayOf(0.65f to Color(0xFFB6D866), 1.0f to Color(0xFF5D8D32))
+
+    DisposableEffect(viewModelInicial) {
+        viewModelInicial.crearListener()
+        onDispose { viewModelInicial.borrarListener() }
+    }
 
     // Probando animaciones. Esto es un contenedor en el que si ahora mismo encapsulo el contenido del siguiente if hará una animación al cambiar el estado de dialogoCrearUsuario
     //AnimatedVisibility(!dialogoCrearUsuario) {}
@@ -112,19 +123,21 @@ fun PantallaInicial(navController: NavHostController) {
     }
 
     if (dialogoCrearUsuario) DialogoCrearUsuario(viewModelInicial, navController)
-    if (dialogoIniciarSesion) DialogoIniciarSesion(viewModelInicial, navController)
+    if (dialogoIniciarSesion) dialogoIniciarSesion(viewModelInicial, navController)
 }
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
-private fun DialogoCrearUsuario(miViewModel: ViewModelInicial, navController: NavHostController) {
-    val textoNombre = miViewModel.textoNombre.collectAsState().value
-    val textoEmail = miViewModel.textoEmail.collectAsState().value
-    val textoNombreUsuario = miViewModel.textoNombreUsuario.collectAsState().value
-    val textoPassword = miViewModel.textoPassword.collectAsState().value
-    val textoRepitePassword = miViewModel.textoRepitePassword.collectAsState().value
+private fun DialogoCrearUsuario(viewModelInicial: ViewModelInicial, navController: NavHostController) {
+    val textoNombre = viewModelInicial.textoNombre.collectAsState().value
+    val textoEmail = viewModelInicial.textoEmail.collectAsState().value
+    val textoNombreUsuario = viewModelInicial.textoNombreUsuario.collectAsState().value
+    val textoPassword = viewModelInicial.textoPassword.collectAsState().value
+    val textoRepitePassword = viewModelInicial.textoRepitePassword.collectAsState().value
+    var datosUserValidos: Int
+    val muestraMensajePassword = remember { mutableStateOf(false) }
     Dialog(
-        onDismissRequest = { miViewModel.abrirCrearUsuario() },
+        onDismissRequest = { viewModelInicial.abrirCrearUsuario() },
         properties = DialogProperties(decorFitsSystemWindows = true)
     ) {
         Column(
@@ -134,26 +147,63 @@ private fun DialogoCrearUsuario(miViewModel: ViewModelInicial, navController: Na
             (LocalView.current.parent as? DialogWindowProvider)?.window?.setDimAmount(0.05f)
             Logotipo()
             Texto(text = "Nombre completo")
-            CampoDeTexto(textoNombre) { nuevoTexto -> miViewModel.actualizaNombre(nuevoTexto) }
+            CampoDeTexto(textoNombre) { nuevoTexto -> viewModelInicial.actualizaNombre(nuevoTexto) }
             Texto(text = "Dirección de email")
-            CampoDeTexto(texto = textoEmail) { nuevoTexto -> miViewModel.actualizaEmail(nuevoTexto) }
+            CampoDeTexto(texto = textoEmail) { nuevoTexto ->
+                viewModelInicial.actualizaEmail(
+                    nuevoTexto
+                )
+            }
             Texto(text = "Nombre de usuario")
-            CampoDeTexto(texto = textoNombreUsuario) { nuevoTexto -> miViewModel.actualizaNombreUsuario(nuevoTexto) }
+            CampoDeTexto(texto = textoNombreUsuario) { nuevoTexto ->
+                viewModelInicial.actualizaNombreUsuario(
+                    nuevoTexto
+                )
+            }
             Texto(text = "Contraseña")
-            CampoDeTexto(texto = textoPassword) { nuevoTexto -> miViewModel.actualizaPassword(nuevoTexto) }
+            CampoDeTexto(texto = textoPassword) { nuevoTexto ->
+                viewModelInicial.actualizaPassword(
+                    nuevoTexto
+                )
+            }
             Texto(text = "Repite la contraseña")
-            CampoDeTexto(texto = textoRepitePassword) { nuevoTexto -> miViewModel.actualizaPasswordOtraVez(nuevoTexto) }
-            BotonesSesion(texto1 = "Crear cuenta", navigate = { navController.navigate(Ruta.Principal.ruta) }) { miViewModel.abrirCrearUsuario() }
+            CampoDeTexto(texto = textoRepitePassword) { nuevoTexto ->
+                viewModelInicial.actualizaPasswordOtraVez(
+                    nuevoTexto
+                )
+            }
+            BotonesSesion(texto1 = "Crear cuenta", { viewModelInicial.abrirCrearUsuario() }) {
+                datosUserValidos = viewModelInicial.compruebaPassword(textoPassword, textoRepitePassword)
+                when (datosUserValidos) {
+                    1 -> {
+                        viewModelInicial.addUser(
+                            textoEmail,
+                            textoNombre,
+                            textoNombreUsuario,
+                            textoPassword
+                        )
+                        viewModelInicial.abrirCrearUsuario()
+                        navController.navigate(Ruta.Principal.ruta)
+                    }
+
+                    2 -> {
+                        muestraMensajePassword.value = true
+                    }
+                }
+            }
         }
     }
+    if(muestraMensajePassword.value) dialogoPassword(viewModelInicial, "Las contraseñas no coinciden", muestraMensajePassword)
 }
 
 @Composable
-private fun DialogoIniciarSesion(miViewModel: ViewModelInicial, navController: NavHostController) {
-    val textoNombreUsuario = miViewModel.textoNombreUsuario.collectAsState().value
-    val textoPassword = miViewModel.textoPassword.collectAsState().value
+private fun dialogoIniciarSesion(viewModelInicial: ViewModelInicial, navController: NavHostController) {
+    val textoNombreUsuario = viewModelInicial.textoNombreUsuario.collectAsState().value
+    val textoPassword = viewModelInicial.textoPassword.collectAsState().value
+    var datosUserValidos: Int
+    val muestraMensajePassword = remember { mutableStateOf(false) }
     Dialog(
-        onDismissRequest = { miViewModel.abrirIniciarSesion() },
+        onDismissRequest = { viewModelInicial.abrirIniciarSesion() },
         properties = DialogProperties(decorFitsSystemWindows = true)
     ) {
         Column(
@@ -163,12 +213,27 @@ private fun DialogoIniciarSesion(miViewModel: ViewModelInicial, navController: N
             (LocalView.current.parent as? DialogWindowProvider)?.window?.setDimAmount(0.05f)
             Logotipo()
             Texto(text = "Nombre de usuario")
-            CampoDeTexto(texto = textoNombreUsuario) { nuevoTexto -> miViewModel.actualizaNombreUsuario(nuevoTexto) }
+            CampoDeTexto(texto = textoNombreUsuario) { nuevoTexto -> viewModelInicial.actualizaNombreUsuario(nuevoTexto) }
             Texto(text = "Contraseña")
-            CampoDeTexto(texto = textoPassword) { nuevoTexto -> miViewModel.actualizaPassword(nuevoTexto) }
-            BotonesSesion(texto1 = "Iniciar sesión", navigate = { navController.navigate(Ruta.Principal.ruta) }) { miViewModel.abrirIniciarSesion() }
+            CampoDeTexto(texto = textoPassword) { nuevoTexto -> viewModelInicial.actualizaPassword(nuevoTexto) }
+            BotonesSesion(texto1 = "Iniciar sesión", { viewModelInicial.abrirIniciarSesion() }) {
+                datosUserValidos = viewModelInicial.compruebaUsuarioExistente(textoNombreUsuario)
+                Log.d("datosUser", datosUserValidos.toString())
+                when (datosUserValidos) {
+                    1 -> {
+                        if (viewModelInicial.compruebaCredenciales(textoNombreUsuario, textoPassword)) {
+                            viewModelInicial.abrirIniciarSesion()
+                            navController.navigate(Ruta.Principal.ruta)
+                        }
+                    }
+                    2 -> {
+                        muestraMensajePassword.value = true
+                    }
+                }
+            }
         }
     }
+    if(muestraMensajePassword.value) dialogoPassword(viewModelInicial, "Contraseña incorrecta", muestraMensajePassword)
 }
 
 @Composable
@@ -217,10 +282,9 @@ fun Logotipo() {
 }
 
 @Composable
-fun BotonesSesion(texto1: String, navigate: () -> Unit, onClick: () -> Unit) {
+fun BotonesSesion(texto1: String, atras: () -> Unit, onClick: () -> Unit) {
     Button(
         onClick = {
-                navigate()
                 onClick()
         },
         colors = ButtonDefaults.buttonColors(colorBoton),
@@ -235,12 +299,12 @@ fun BotonesSesion(texto1: String, navigate: () -> Unit, onClick: () -> Unit) {
         modifier = Modifier.padding(top = 20.dp)
     )
     IconButton(
-        onClick = onClick,
+        onClick = { atras() },
         modifier = Modifier.fillMaxWidth(),
         content = {
             Row (verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Icono volver",
                     tint = colorBoton
                 )
@@ -251,5 +315,29 @@ fun BotonesSesion(texto1: String, navigate: () -> Unit, onClick: () -> Unit) {
                 )
             }
         }
+    )
+}
+
+@Composable
+private fun dialogoPassword(
+    viewModelInicial: ViewModelInicial,
+    contenido: String,
+    muestraMensajePassword: MutableState<Boolean>
+) {
+    AlertDialog(
+        onDismissRequest = {
+            viewModelInicial.reiniciaValidacionDatos(0)
+            muestraMensajePassword.value = false
+        },
+        confirmButton = {
+            Button(onClick = {
+                viewModelInicial.reiniciaValidacionDatos(0)
+                muestraMensajePassword.value = false
+            }) {
+                Text(text = "Probar de nuevo")
+            }
+        },
+        title = { Text("Contraseña no válida") },
+        text = { Text(contenido) }
     )
 }

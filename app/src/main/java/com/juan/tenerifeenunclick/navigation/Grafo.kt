@@ -18,10 +18,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
@@ -105,10 +104,12 @@ fun GrafoNavegacion() {
                     }
                 },
                 content = {
-                    RutasNavHost(navController, scope, drawerState, context)
+                    RutasNavHost(navController, scope, context)
                 }
             )
-            IconButton(
+            FloatingActionButton(
+                shape = CircleShape,
+                containerColor = colorBotonMenu,
                 onClick = {
                     scope.launch {
                         if (drawerState.isOpen) {
@@ -123,26 +124,19 @@ fun GrafoNavegacion() {
                     .padding(15.dp)
                     .size(70.dp),
                 content = {
-                    Surface(
-                        shape = CircleShape,
-                        color = colorBotonMenu,
-                        shadowElevation = 8.dp,
-                        content = {
-                            Icon(
-                                imageVector = Icons.Rounded.Menu,
-                                contentDescription = "Icono menú",
-                                modifier = Modifier
-                                    .padding(10.dp)
-                                    .size(45.dp),
-                                tint = colorFuenteBoton
-                            )
-                        }
+                    Icon(
+                        imageVector = Icons.Rounded.Menu,
+                        contentDescription = "Icono menú",
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .size(45.dp),
+                        tint = colorFuenteBoton
                     )
                 }
             )
         }
     } else {
-        RutasNavHost(navController, scope, drawerState, context)
+        RutasNavHost(navController, scope, context)
     }
 }
 
@@ -151,7 +145,6 @@ fun GrafoNavegacion() {
 fun RutasNavHost(
     navController: NavHostController,
     scope: CoroutineScope,
-    drawerState: DrawerState,
     context: Context
 ) {
     NavHost(
@@ -174,7 +167,7 @@ fun RutasNavHost(
             PantallaRecreativas()
         }
         composable("exoticas") {
-            PantallaExoticas()
+            PantallaExoticas(context, scope)
         }
     }
 }

@@ -1,70 +1,90 @@
 package com.juan.tenerifeenunclick.viewModel
 
+import android.net.Uri
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.view.LifecycleCameraController
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
+import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.toObject
+import com.juan.tenerifeenunclick.entity.Reportes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.File
+import java.util.concurrent.Executor
 
 class ViewModelExoticas : ViewModel() {
-    private val _dialogoCrearUsuario = MutableStateFlow(false)
-    val dialogoCrearUsuario = _dialogoCrearUsuario.asStateFlow()
-    private val _dialogoIniciarSesion = MutableStateFlow(false)
-    val dialogoIniciarSesion = _dialogoIniciarSesion.asStateFlow()
-    private val _elementosDeFondo = MutableStateFlow(true)
+    private val conexion = FirebaseFirestore.getInstance()
+    private lateinit var listener: ListenerRegistration
     private val _estaAbierto = MutableStateFlow(false)
     val estaAbierto = _estaAbierto.asStateFlow()
-    val elementosDeFondo = _elementosDeFondo.asStateFlow()
     private val _nombrePlanta = MutableStateFlow("")
     val nombrePlanta = _nombrePlanta.asStateFlow()
     private val _nombreMunicipio = MutableStateFlow("")
     val nombreMunicipio = _nombreMunicipio.asStateFlow()
-    private val _textoNombreUsuario = MutableStateFlow("")
-    val textoNombreUsuario = _textoNombreUsuario.asStateFlow()
-    private val _textoPassword = MutableStateFlow("")
-    val textoPassword = _textoPassword.asStateFlow()
-    private val _textoRepitePassword = MutableStateFlow("")
-    val textoRepitePassword = _textoRepitePassword.asStateFlow()
     private val _opcionesAfeccion = MutableStateFlow(listOf("Baja", "Media", "Alta"))
     val opcionesAfeccion = _opcionesAfeccion.asStateFlow()
-    private val _opcionSeleccionada = MutableStateFlow("Baja")
-    val opcionSeleccionada = _opcionSeleccionada.asStateFlow()
+    private val _opcionRadioButtomSeleccionada = MutableStateFlow(_opcionesAfeccion.value[0])
+    val opcionSeleccionada = _opcionRadioButtomSeleccionada.asStateFlow()
+    private var _listaReportes = MutableStateFlow(mutableStateListOf<Reportes>())
+    var listaReportes = _listaReportes.asStateFlow()
 
-
-    fun AbreCierraDropDown() {
-        _estaAbierto.value = !_estaAbierto.value
+    fun crearListener() {
+        listener = conexion.collection("Reportes").addSnapshotListener { datos, error ->
+            if (error == null) {
+                datos?.documentChanges?.forEach { cambio ->
+                    when (cambio.type) {
+                        DocumentChange.Type.ADDED -> {
+                            val reportes = cambio.document.toObject<Reportes>()
+                            _listaReportes.value.add(reportes)
+                        }
+                        DocumentChange.Type.MODIFIED -> {
+                            val reportes = cambio.document.toObject<Reportes>()
+                            _listaReportes.value[cambio.newIndex] = reportes
+                        }
+                        else -> {
+                            val reportes = cambio.document.toObject<Reportes>()
+                            _listaReportes.value.remove(reportes)
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    fun abrirCrearUsuario() {
-        _dialogoCrearUsuario.value = !_dialogoCrearUsuario.value
-        _elementosDeFondo.value = !_elementosDeFondo.value
+    fun borrarListener() {
+        listener.remove()
     }
 
-    fun abrirIniciarSesion() {
-        _dialogoIniciarSesion.value = !_dialogoIniciarSesion.value
-        _elementosDeFondo.value = !_elementosDeFondo.value
+    fun establecerNombrePlanta(nombre: String) {
+        _nombrePlanta.value = nombre
     }
 
-    fun actualizaNombrePlanta(nuevoTexto: String) {
-        _nombrePlanta.value = nuevoTexto
-    }
-
-    fun actualizaEmail(nuevoTexto: String) {
-        _nombreMunicipio.value = nuevoTexto
-    }
-
-    fun actualizaNombreUsuario(nuevoTexto: String) {
-        _textoNombreUsuario.value = nuevoTexto
-    }
-
-    fun actualizaPassword(nuevoTexto: String) {
-        _textoPassword.value = nuevoTexto
-    }
-
-    fun actualizaPasswordOtraVez(nuevoTexto: String) {
-        _textoRepitePassword.value = nuevoTexto
+    fun establecerNombreMunicipio(nombre: String) {
+        _nombreMunicipio.value = nombre
     }
 
     fun updateOpcionSeleccionada(opcion: String) {
-        _opcionSeleccionada.value = opcion
+        _opcionRadioButtomSeleccionada.value = opcion
+    }
+
+    fun addReporte(especie: String, municipio: String, incidencia: String) {
+        val nuevoReporte = Reportes(especie, municipio, incidencia)
+        conexion.collection("Reportes").add(nuevoReporte)
+    }
+
+    fun abreCierraCamara() {
+        _estaAbierto.value = !_estaAbierto.value
+    }
+
+    fun limpiarCampos() {
+        _nombrePlanta.value = ""
+        _nombreMunicipio.value = ""
+        _opcionRadioButtomSeleccionada.value = _opcionesAfeccion.value[0]
     }
 
     fun crearListaDeExoticas(): MutableStateFlow<List<String>> {
@@ -120,5 +140,23 @@ class ViewModelExoticas : ViewModel() {
             "Vilaflor"
         )
         return MutableStateFlow(municipios)
+    }
+
+    fun tomarFoto(
+        camController: LifecycleCameraController,
+        executor: Executor,
+        imagenURI: MutableState<Uri?>
+    ) {
+        val foto = File.createTempFile("imagen", ".jpg")
+        val destino = ImageCapture.OutputFileOptions.Builder(foto).build()
+        camController.takePicture(destino, executor, object : ImageCapture.OnImageSavedCallback {
+            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                println(outputFileResults.savedUri)
+                imagenURI.value = outputFileResults.savedUri
+            }
+            override fun onError(exception: ImageCaptureException) {
+                // si la imagen no se guarda el código vendrá aquí
+            }
+        })
     }
 }
