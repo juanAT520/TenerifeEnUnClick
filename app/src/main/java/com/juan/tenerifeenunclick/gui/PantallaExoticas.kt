@@ -1,10 +1,8 @@
 package com.juan.tenerifeenunclick.gui
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.ImageDecoder
-import android.net.Uri
 import android.view.ViewGroup
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
@@ -32,6 +30,7 @@ import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -63,19 +62,26 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.juan.tenerifeenunclick.ui.theme.White
 import com.juan.tenerifeenunclick.ui.theme.colorFuente
 import com.juan.tenerifeenunclick.ui.theme.colorFuenteBoton
-import com.juan.tenerifeenunclick.ui.theme.fondo
 import com.juan.tenerifeenunclick.ui.theme.fondoTextField
 import com.juan.tenerifeenunclick.viewModel.ViewModelExoticas
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-
 
 @Composable
 fun PantallaExoticas(context: Context, scope: CoroutineScope) {
@@ -86,9 +92,12 @@ fun PantallaExoticas(context: Context, scope: CoroutineScope) {
     val nombrePlanta = viewModelExoticas.nombrePlanta.collectAsState().value
     val nombreMunicipio = viewModelExoticas.nombreMunicipio.collectAsState().value
     val opcionSeleccionada = viewModelExoticas.opcionSeleccionada.collectAsState().value
-    val camaraAbierta = viewModelExoticas.estaAbierto.collectAsState().value
-    val imagenURI = remember { mutableStateOf<Uri?>(null) }
+    val abrirCamara = viewModelExoticas.abrirCamara.collectAsState().value
+    val muestraFoto = viewModelExoticas.muestraDialogoFoto.collectAsState().value
+    val muestraUbicacion = viewModelExoticas.muestraDialogoUbicacion.collectAsState().value
     val muestraDialogo = remember { mutableStateOf(false) }
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
 
     DisposableEffect(viewModelExoticas) {
         viewModelExoticas.crearListener()
@@ -120,21 +129,12 @@ fun PantallaExoticas(context: Context, scope: CoroutineScope) {
         FilaDropDown("Municipio: ", listaMunicipios, viewModelExoticas.nombreMunicipio) { seleccion ->
             viewModelExoticas.establecerNombreMunicipio(seleccion)
         }
-        BotonRegistro("Ubicación: ", "Pulsa para localizar", Icons.Rounded.LocationOn) {}
+        BotonRegistro("Ubicación: ", "Pulsa para localizar", Icons.Rounded.LocationOn) {
+            viewModelExoticas.abreDialogoUbicacion()
+        }
         BotonRegistro("Foto: ", "Envía una foto", Icons.Rounded.CameraAlt) {
             viewModelExoticas.abreCierraCamara()
         }
-
-        imagenURI.value?.let { uri ->
-            val imagePainter = rememberImagePainter(data = uri)
-
-            Image(
-                painter = imagePainter,
-                contentDescription = null, // proporciona una descripción adecuada
-                modifier = Modifier.size(200.dp) // ajusta el tamaño según sea necesario
-            )
-        }
-
         Text(
             text = "Afección al medio:",
             fontWeight = FontWeight.Bold,
@@ -192,8 +192,48 @@ fun PantallaExoticas(context: Context, scope: CoroutineScope) {
             }
         }
     }
-    if (camaraAbierta) DialogoAbrirCamara(context, viewModelExoticas, scope, imagenURI)
+    if (abrirCamara) DialogoAbrirCamara(context, viewModelExoticas, scope)
     if (muestraDialogo.value) dialogoReporteEnviado(muestraDialogo)
+    if (muestraFoto) dialogoMuestraFoto(viewModelExoticas)
+    if (muestraUbicacion) MostrarUbicacionExacta(fusedLocationClient, viewModelExoticas)
+}
+
+@Composable
+fun dialogoMuestraFoto(viewModelExoticas: ViewModelExoticas) {
+    val imagePainter = rememberAsyncImagePainter(model = viewModelExoticas.imagenURI.value)
+
+    Dialog(
+        onDismissRequest = { viewModelExoticas.cierraDialogoFoto() }
+    ) {
+        (LocalView.current.parent as? DialogWindowProvider)?.window?.setDimAmount(0.8f)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter = imagePainter,
+                contentDescription = "Imagen Foto Tomada",
+                modifier = Modifier.size(400.dp)
+            )
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(top = 20.dp)
+                    .fillMaxWidth()
+            ) {
+                Button(onClick = {
+                    viewModelExoticas.abreCierraCamara()
+                    viewModelExoticas.cierraDialogoFoto()
+                }) {
+                    Text(text = "Saca otra")
+                }
+                Button(onClick = { viewModelExoticas.cierraDialogoFoto() }) {
+                    Text(text = "Usar esta foto")
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -201,8 +241,7 @@ fun PantallaExoticas(context: Context, scope: CoroutineScope) {
 private fun DialogoAbrirCamara(
     context: Context,
     viewModelExoticas: ViewModelExoticas,
-    scope: CoroutineScope,
-    imagenURI: MutableState<Uri?>
+    scope: CoroutineScope
 ) {
     Dialog(
         onDismissRequest = { viewModelExoticas.abreCierraCamara() },
@@ -231,14 +270,15 @@ private fun DialogoAbrirCamara(
                 }
                 FloatingActionButton(
                     shape = CircleShape,
-                    containerColor = fondo,
+                    containerColor = White,
                     modifier = Modifier.padding(bottom = 30.dp),
                     onClick = {
                     val executor = ContextCompat.getMainExecutor(context)
-                    viewModelExoticas.tomarFoto(camController, executor, imagenURI)
+                    viewModelExoticas.tomarFoto(camController, executor)
                     scope.launch {
-                        delay(500)
+                        delay(1000)
                         viewModelExoticas.abreCierraCamara()
+                        viewModelExoticas.abreDialogoFoto()
                     }
                 }) {
                     Icon(
@@ -374,11 +414,6 @@ private fun iniciarCamara(
     })
 }
 
-
-fun getBitmapFromUri(context: Context, uri: Uri): Bitmap {
-    return ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
-}
-
 @Composable
 private fun dialogoReporteEnviado (
     muestraDialogo: MutableState<Boolean>
@@ -399,3 +434,48 @@ private fun dialogoReporteEnviado (
     )
 }
 
+@SuppressLint("MissingPermission")
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun MostrarUbicacionExacta(fusedLocationClient: FusedLocationProviderClient, viewModelExoticas: ViewModelExoticas) {
+    val locationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+    val cameraPositionState = remember { mutableStateOf(CameraPositionState(CameraPosition(LatLng(0.0, -0.0),  0f,  0f,  0f))) }
+    val ubicacion = remember { mutableStateOf(LatLng(0.0, -0.0)) }
+
+    LaunchedEffect(Unit) {
+        locationPermissionState.launchPermissionRequest()
+        if (locationPermissionState.status.isGranted) {
+            val infoLocalizacion = fusedLocationClient.lastLocation
+            infoLocalizacion.addOnSuccessListener {
+                ubicacion.value = LatLng(it.latitude, it.longitude)
+                cameraPositionState.value = CameraPositionState(CameraPosition(ubicacion.value, 16f, 0f, 0f))
+            }
+        }
+    }
+    Dialog(
+        onDismissRequest = { viewModelExoticas.cierraDialogoUbicacion() }
+    ) {
+        (LocalView.current.parent as? DialogWindowProvider)?.window?.setDimAmount(0.8f)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Card(
+                modifier = Modifier
+                    .size(300.dp)
+                    .padding(0.dp, 20.dp)
+            ) {
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState.value,
+                    content = {
+                        Marker(position = ubicacion.value)
+                    }
+                )
+            }
+            Button(onClick = { viewModelExoticas.cierraDialogoUbicacion() }) {
+                Text(text = "Usar esta ubicación")
+            }
+        }
+    }
+}

@@ -1,10 +1,10 @@
 package com.juan.tenerifeenunclick.viewModel
 
 import android.net.Uri
+import android.util.Log
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.view.LifecycleCameraController
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.DocumentChange
@@ -20,8 +20,14 @@ import java.util.concurrent.Executor
 class ViewModelExoticas : ViewModel() {
     private val conexion = FirebaseFirestore.getInstance()
     private lateinit var listener: ListenerRegistration
-    private val _estaAbierto = MutableStateFlow(false)
-    val estaAbierto = _estaAbierto.asStateFlow()
+    private val _abrirCamara = MutableStateFlow(false)
+    val abrirCamara = _abrirCamara.asStateFlow()
+    private val _muestraDialogoFoto = MutableStateFlow(false)
+    val muestraDialogoFoto = _muestraDialogoFoto.asStateFlow()
+    private val _muestraDialogoUbicacion = MutableStateFlow(false)
+    val muestraDialogoUbicacion = _muestraDialogoUbicacion.asStateFlow()
+    private val _imagenURI = MutableStateFlow<Uri?>(null)
+    val imagenURI = _imagenURI.asStateFlow()
     private val _nombrePlanta = MutableStateFlow("")
     val nombrePlanta = _nombrePlanta.asStateFlow()
     private val _nombreMunicipio = MutableStateFlow("")
@@ -78,7 +84,20 @@ class ViewModelExoticas : ViewModel() {
     }
 
     fun abreCierraCamara() {
-        _estaAbierto.value = !_estaAbierto.value
+        _abrirCamara.value = !_abrirCamara.value
+    }
+
+    fun cierraDialogoFoto() {
+        _muestraDialogoFoto.value = false
+    }
+    fun abreDialogoFoto() {
+        _muestraDialogoFoto.value = true
+    }
+    fun cierraDialogoUbicacion() {
+        _muestraDialogoUbicacion.value = false
+    }
+    fun abreDialogoUbicacion() {
+        _muestraDialogoUbicacion.value = true
     }
 
     fun limpiarCampos() {
@@ -144,18 +163,17 @@ class ViewModelExoticas : ViewModel() {
 
     fun tomarFoto(
         camController: LifecycleCameraController,
-        executor: Executor,
-        imagenURI: MutableState<Uri?>
+        executor: Executor
     ) {
         val foto = File.createTempFile("imagen", ".jpg")
         val destino = ImageCapture.OutputFileOptions.Builder(foto).build()
         camController.takePicture(destino, executor, object : ImageCapture.OnImageSavedCallback {
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                println(outputFileResults.savedUri)
-                imagenURI.value = outputFileResults.savedUri
+                Log.e("RUTA",(outputFileResults.savedUri).toString())
+                _imagenURI.value = outputFileResults.savedUri
             }
             override fun onError(exception: ImageCaptureException) {
-                // si la imagen no se guarda el código vendrá aquí
+                Log.e("ERROR_CAPTURA", "Error al capturar la imagen: ${exception.message}", exception)
             }
         })
     }
