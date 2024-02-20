@@ -27,10 +27,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -135,7 +132,8 @@ private fun DialogoCrearUsuario(viewModelInicial: ViewModelInicial, navControlle
     val textoPassword = viewModelInicial.textoPassword.collectAsState().value
     val textoRepitePassword = viewModelInicial.textoRepitePassword.collectAsState().value
     var datosUserValidos: Int
-    val muestraMensajePassword = remember { mutableStateOf(false) }
+    val muestraMensajePassword = viewModelInicial.muestraMensajePassword.collectAsState().value
+    val muestraMensajeDatos = viewModelInicial.muestraMensajeDatos.collectAsState().value
     Dialog(
         onDismissRequest = { viewModelInicial.abrirCrearUsuario() },
         properties = DialogProperties(decorFitsSystemWindows = true)
@@ -174,8 +172,14 @@ private fun DialogoCrearUsuario(viewModelInicial: ViewModelInicial, navControlle
             }
             BotonesSesion(texto1 = "Crear cuenta", { viewModelInicial.abrirCrearUsuario() }) {
                 datosUserValidos = viewModelInicial.compruebaPassword(textoPassword, textoRepitePassword)
-                when (datosUserValidos) {
-                    1 -> {
+                when {
+                    datosUserValidos == 2 -> {
+                        viewModelInicial.abrirCerrarMensajePassword()
+                    }
+                    textoEmail.isEmpty() || textoNombreUsuario.isEmpty() -> {
+                        viewModelInicial.abrirCerrarMensajeDatos()
+                    }
+                    else -> {
                         viewModelInicial.addUser(
                             textoEmail,
                             textoNombre,
@@ -185,15 +189,12 @@ private fun DialogoCrearUsuario(viewModelInicial: ViewModelInicial, navControlle
                         viewModelInicial.abrirCrearUsuario()
                         navController.navigate(Ruta.Principal.ruta)
                     }
-
-                    2 -> {
-                        muestraMensajePassword.value = true
-                    }
                 }
             }
         }
     }
-    if(muestraMensajePassword.value) dialogoPassword(viewModelInicial, "Las contraseñas no coinciden", muestraMensajePassword)
+    if(muestraMensajePassword) dialogoAviso(viewModelInicial, "Contraseña no válida", "Las contraseñas no coinciden o no existen")  { viewModelInicial.abrirCerrarMensajePassword() }
+    if(muestraMensajeDatos) dialogoAviso(viewModelInicial, "Faltan datos", "Debes introducir dirección de email y nombre de usuario.") { viewModelInicial.abrirCerrarMensajeDatos() }
 }
 
 @Composable
@@ -201,7 +202,7 @@ private fun dialogoIniciarSesion(viewModelInicial: ViewModelInicial, navControll
     val textoNombreUsuario = viewModelInicial.textoNombreUsuario.collectAsState().value
     val textoPassword = viewModelInicial.textoPassword.collectAsState().value
     var datosUserValidos: Int
-    val muestraMensajePassword = remember { mutableStateOf(false) }
+    val muestraMensajePassword = viewModelInicial.muestraMensajePassword.collectAsState().value
     Dialog(
         onDismissRequest = { viewModelInicial.abrirIniciarSesion() },
         properties = DialogProperties(decorFitsSystemWindows = true)
@@ -227,13 +228,13 @@ private fun dialogoIniciarSesion(viewModelInicial: ViewModelInicial, navControll
                         }
                     }
                     2 -> {
-                        muestraMensajePassword.value = true
+                        viewModelInicial.abrirCerrarMensajePassword()
                     }
                 }
             }
         }
     }
-    if(muestraMensajePassword.value) dialogoPassword(viewModelInicial, "Contraseña incorrecta", muestraMensajePassword)
+    if(muestraMensajePassword) dialogoAviso(viewModelInicial, "Contraseña no válida", "Contraseña incorrecta") { viewModelInicial.abrirCerrarMensajePassword() }
 }
 
 @Composable
@@ -319,25 +320,26 @@ fun BotonesSesion(texto1: String, atras: () -> Unit, onClick: () -> Unit) {
 }
 
 @Composable
-private fun dialogoPassword(
+private fun dialogoAviso(
     viewModelInicial: ViewModelInicial,
+    titulo: String,
     contenido: String,
-    muestraMensajePassword: MutableState<Boolean>
+    onClick: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = {
             viewModelInicial.reiniciaValidacionDatos(0)
-            muestraMensajePassword.value = false
+            onClick()
         },
         confirmButton = {
             Button(onClick = {
                 viewModelInicial.reiniciaValidacionDatos(0)
-                muestraMensajePassword.value = false
+                onClick()
             }) {
                 Text(text = "Probar de nuevo")
             }
         },
-        title = { Text("Contraseña no válida") },
+        title = { Text(titulo) },
         text = { Text(contenido) }
     )
 }

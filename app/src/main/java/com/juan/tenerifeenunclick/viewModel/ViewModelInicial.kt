@@ -20,6 +20,10 @@ class ViewModelInicial : ViewModel() {
     val dialogoCrearUsuario = _dialogoCrearUsuario.asStateFlow()
     private val _dialogoIniciarSesion = MutableStateFlow(false)
     val dialogoIniciarSesion = _dialogoIniciarSesion.asStateFlow()
+    private val _muestraMensajePassword = MutableStateFlow(false)
+    val muestraMensajePassword = _muestraMensajePassword.asStateFlow()
+    private val _muestraMensajeDatos = MutableStateFlow(false)
+    val muestraMensajeDatos = _muestraMensajeDatos.asStateFlow()
     private val _elementosDeFondo = MutableStateFlow(true)
     val elementosDeFondo = _elementosDeFondo.asStateFlow()
     private val _datosUserValidos = MutableStateFlow(0)
@@ -63,7 +67,7 @@ class ViewModelInicial : ViewModel() {
     }
 
     fun compruebaPassword(password: String, repitePassword: String): Int {
-        return if (password.trim() == repitePassword.trim()) {
+        return if ((password.trim() == repitePassword.trim()) && password.trim().isNotEmpty()) {
             1
         } else {
             2
@@ -104,7 +108,13 @@ class ViewModelInicial : ViewModel() {
         conexion.collection("Usuarios").document(email).set(nuevoUser)
     }
 
+    fun abrirCerrarMensajePassword() {
+        _muestraMensajePassword.value = !_muestraMensajePassword.value
+    }
 
+    fun abrirCerrarMensajeDatos() {
+        _muestraMensajeDatos.value = !_muestraMensajeDatos.value
+    }
 
     fun abrirCrearUsuario() {
         _dialogoCrearUsuario.value = !_dialogoCrearUsuario.value
