@@ -126,7 +126,11 @@ fun PantallaExoticas(context: Context, scope: CoroutineScope) {
         FilaDropDown("Especie: ", listaExoticas, viewModelExoticas.nombrePlanta) { seleccion ->
             viewModelExoticas.establecerNombrePlanta(seleccion)
         }
-        FilaDropDown("Municipio: ", listaMunicipios, viewModelExoticas.nombreMunicipio) { seleccion ->
+        FilaDropDown(
+            "Municipio: ",
+            listaMunicipios,
+            viewModelExoticas.nombreMunicipio
+        ) { seleccion ->
             viewModelExoticas.establecerNombreMunicipio(seleccion)
         }
         BotonRegistro("Ubicación: ", "Pulsa para localizar", Icons.Rounded.LocationOn) {
@@ -273,14 +277,14 @@ private fun DialogoAbrirCamara(
                     containerColor = White,
                     modifier = Modifier.padding(bottom = 30.dp),
                     onClick = {
-                    val executor = ContextCompat.getMainExecutor(context)
-                    viewModelExoticas.tomarFoto(camController, executor)
-                    scope.launch {
-                        delay(1000)
-                        viewModelExoticas.abreCierraCamara()
-                        viewModelExoticas.abreDialogoFoto()
-                    }
-                }) {
+                        val executor = ContextCompat.getMainExecutor(context)
+                        viewModelExoticas.tomarFoto(camController, executor)
+                        scope.launch {
+                            delay(1000)
+                            viewModelExoticas.abreCierraCamara()
+                            viewModelExoticas.abreDialogoFoto()
+                        }
+                    }) {
                     Icon(
                         imageVector = Icons.Rounded.Camera,
                         contentDescription = "Icono cámara"
@@ -415,7 +419,7 @@ private fun iniciarCamara(
 }
 
 @Composable
-private fun dialogoReporteEnviado (
+private fun dialogoReporteEnviado(
     muestraDialogo: MutableState<Boolean>
 ) {
     AlertDialog(
@@ -437,18 +441,37 @@ private fun dialogoReporteEnviado (
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MostrarUbicacionExacta(fusedLocationClient: FusedLocationProviderClient, viewModelExoticas: ViewModelExoticas) {
+fun MostrarUbicacionExacta(
+    fusedLocationClient: FusedLocationProviderClient,
+    viewModelExoticas: ViewModelExoticas
+) {
     val locationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
-    val cameraPositionState = remember { mutableStateOf(CameraPositionState(CameraPosition(LatLng(0.0, -0.0),  0f,  0f,  0f))) }
+    val cameraPositionState = remember {
+        mutableStateOf(
+            CameraPositionState(
+                CameraPosition(
+                    LatLng(0.0, -0.0),
+                    0f,
+                    0f,
+                    0f
+                )
+            )
+        )
+    }
     val ubicacion = remember { mutableStateOf(LatLng(0.0, -0.0)) }
 
     LaunchedEffect(Unit) {
         locationPermissionState.launchPermissionRequest()
         if (locationPermissionState.status.isGranted) {
             val infoLocalizacion = fusedLocationClient.lastLocation
-            infoLocalizacion.addOnSuccessListener {
-                ubicacion.value = LatLng(it.latitude, it.longitude)
-                cameraPositionState.value = CameraPositionState(CameraPosition(ubicacion.value, 16f, 0f, 0f))
+            infoLocalizacion.addOnSuccessListener { location ->
+                if (location != null) {
+                    ubicacion.value = LatLng(location.latitude, location.longitude)
+                    println(location.latitude)
+                    println(location.longitude)
+                    cameraPositionState.value =
+                        CameraPositionState(CameraPosition(ubicacion.value, 16f, 0f, 0f))
+                }
             }
         }
     }

@@ -94,13 +94,25 @@ fun GrafoNavegacion() {
                                     .size(60.dp),
                                 tint = autumn_foliage
                             )
-                            BotonSeccionMenuLateral({navController.navigate(Ruta.Principal.ruta)}, scope, drawerState, titulo = "Pantalla principal")
-                            BotonSeccionMenuLateral({navController.navigate(Ruta.Autoctonas.ruta)}, scope, drawerState, titulo = "Plantas autóctonas")
-                            BotonSeccionMenuLateral({navController.navigate(Ruta.Rutas.ruta)}, scope, drawerState, titulo = "Rutas y senderos")
-                            BotonSeccionMenuLateral({navController.navigate(Ruta.Recreativas.ruta)}, scope, drawerState, titulo = "Áreas recreativas")
-                            BotonSeccionMenuLateral({navController.navigate(Ruta.Exoticas.ruta)}, scope, drawerState, titulo = "He visto una exótica!!")
+                            BotonSeccionMenuLateral({navController.navigate(Ruta.Principal.ruta){
+                                popUpTo("principal")
+                            }}, scope, drawerState, titulo = "Pantalla principal")
+                            BotonSeccionMenuLateral({navController.navigate(Ruta.Autoctonas.ruta){
+                                popUpTo("principal")
+                            }}, scope, drawerState, titulo = "Plantas autóctonas")
+                            BotonSeccionMenuLateral({navController.navigate(Ruta.Rutas.ruta){
+                                popUpTo("principal")
+                            }}, scope, drawerState, titulo = "Rutas y senderos")
+                            BotonSeccionMenuLateral({navController.navigate(Ruta.Recreativas.ruta){
+                                popUpTo("principal")
+                            }}, scope, drawerState, titulo = "Áreas recreativas")
+                            BotonSeccionMenuLateral({navController.navigate(Ruta.Exoticas.ruta){
+                                popUpTo("principal")
+                            }}, scope, drawerState, titulo = "He visto una exótica!!")
                         }
-                        BotonSeccionMenuLateral({navController.navigate(Ruta.Inicial.ruta)}, scope, drawerState, titulo = "Cerrar sesión")
+                        BotonSeccionMenuLateral({navController.navigate(Ruta.Inicial.ruta){
+                            popUpTo("inicial")
+                        }}, scope, drawerState, titulo = "Cerrar sesión")
                     }
                 },
                 content = {

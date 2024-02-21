@@ -1,6 +1,5 @@
 package com.juan.tenerifeenunclick.viewModel
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.DocumentChange
@@ -22,11 +21,13 @@ class ViewModelInicial : ViewModel() {
     val dialogoIniciarSesion = _dialogoIniciarSesion.asStateFlow()
     private val _muestraMensajePassword = MutableStateFlow(false)
     val muestraMensajePassword = _muestraMensajePassword.asStateFlow()
+    private val _muestraMensajeUsuarioDesconocido = MutableStateFlow(false)
+    val muestraMensajeUsuarioDesconocido = _muestraMensajeUsuarioDesconocido.asStateFlow()
     private val _muestraMensajeDatos = MutableStateFlow(false)
     val muestraMensajeDatos = _muestraMensajeDatos.asStateFlow()
     private val _elementosDeFondo = MutableStateFlow(true)
     val elementosDeFondo = _elementosDeFondo.asStateFlow()
-    private val _datosUserValidos = MutableStateFlow(0)
+    private val _datosUserValidos = MutableStateFlow(false)
     val datosUserValidos = _datosUserValidos.asStateFlow()
     private val _textoNombre = MutableStateFlow("")
     val textoNombre = _textoNombre.asStateFlow()
@@ -38,6 +39,14 @@ class ViewModelInicial : ViewModel() {
     val textoPassword = _textoPassword.asStateFlow()
     private val _textoRepitePassword = MutableStateFlow("")
     val textoRepitePassword = _textoRepitePassword.asStateFlow()
+
+    fun borrarCampos() {
+        _textoNombre.value = ""
+        _textoEmail.value = ""
+        _textoNombreUsuario.value = ""
+        _textoPassword.value = ""
+        _textoRepitePassword.value = ""
+    }
 
     fun crearListener() {
         listener = conexion.collection("Usuarios").addSnapshotListener { datos, error ->
@@ -74,32 +83,17 @@ class ViewModelInicial : ViewModel() {
         }
     }
 
-    fun compruebaUsuarioExistente(nombreUser: String): Int {
-        val usuarios = _listaUsuarios.value
-        usuarios.forEach{ usuario ->
-            Log.d("nombre de usuario", usuario.nombreUser)
-            Log.d("nombre introducido",nombreUser)
-            if (usuario.nombreUser == nombreUser) {
-                return 1
-            }
+    fun compruebaUsuarioExistente(emailUser: String): Boolean {
+        if (emailUser.isEmpty()) {
+            return false
         }
-        return 2
+        val usuarios = _listaUsuarios.value
+        return usuarios.any { usuario ->
+            usuario.email == emailUser
+        }
     }
 
-    fun compruebaCredenciales(nombreUser: String, password: String): Boolean {
-        val usuarios = _listaUsuarios.value
-        usuarios.forEach{ usuario ->
-            if (usuario.nombreUser == nombreUser) {
-                if (usuario.password == password) {
-                    return true
-                }
-            }
-        }
-        _datosUserValidos.value = 0
-        return false
-    }
-
-    fun reiniciaValidacionDatos(valor: Int) {
+    fun reiniciaValidacionDatos(valor: Boolean) {
         _datosUserValidos.value = valor
     }
 
@@ -110,6 +104,10 @@ class ViewModelInicial : ViewModel() {
 
     fun abrirCerrarMensajePassword() {
         _muestraMensajePassword.value = !_muestraMensajePassword.value
+    }
+
+    fun abrirCerrarMensajeUsuarioDesconocido() {
+        _muestraMensajeUsuarioDesconocido.value = !_muestraMensajeUsuarioDesconocido.value
     }
 
     fun abrirCerrarMensajeDatos() {

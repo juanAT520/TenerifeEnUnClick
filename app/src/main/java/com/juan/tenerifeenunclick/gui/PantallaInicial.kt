@@ -1,6 +1,7 @@
 package com.juan.tenerifeenunclick.gui
 
 import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -42,6 +45,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.juan.tenerifeenunclick.navigation.Ruta
 import com.juan.tenerifeenunclick.ui.theme.autumn_foliage
 import com.juan.tenerifeenunclick.ui.theme.colorBoton
@@ -125,7 +130,10 @@ fun PantallaInicial(navController: NavHostController) {
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
-private fun DialogoCrearUsuario(viewModelInicial: ViewModelInicial, navController: NavHostController) {
+private fun DialogoCrearUsuario(
+    viewModelInicial: ViewModelInicial,
+    navController: NavHostController
+) {
     val textoNombre = viewModelInicial.textoNombre.collectAsState().value
     val textoEmail = viewModelInicial.textoEmail.collectAsState().value
     val textoNombreUsuario = viewModelInicial.textoNombreUsuario.collectAsState().value
@@ -134,6 +142,8 @@ private fun DialogoCrearUsuario(viewModelInicial: ViewModelInicial, navControlle
     var datosUserValidos: Int
     val muestraMensajePassword = viewModelInicial.muestraMensajePassword.collectAsState().value
     val muestraMensajeDatos = viewModelInicial.muestraMensajeDatos.collectAsState().value
+    val mensajePassword = remember { mutableStateOf("") }
+    val mensajeDatos = remember { mutableStateOf("") }
     Dialog(
         onDismissRequest = { viewModelInicial.abrirCrearUsuario() },
         properties = DialogProperties(decorFitsSystemWindows = true)
@@ -170,39 +180,75 @@ private fun DialogoCrearUsuario(viewModelInicial: ViewModelInicial, navControlle
                     nuevoTexto
                 )
             }
-            BotonesSesion(texto1 = "Crear cuenta", { viewModelInicial.abrirCrearUsuario() }) {
-                datosUserValidos = viewModelInicial.compruebaPassword(textoPassword, textoRepitePassword)
+            BotonesSesion(texto1 = "Crear cuenta", {
+                viewModelInicial.borrarCampos()
+                viewModelInicial.abrirCrearUsuario()
+            }) {
+                datosUserValidos =
+                    viewModelInicial.compruebaPassword(textoPassword, textoRepitePassword)
                 when {
                     datosUserValidos == 2 -> {
+                        mensajePassword.value = "Las contraseñas no coinciden o no existen"
                         viewModelInicial.abrirCerrarMensajePassword()
                     }
+
                     textoEmail.isEmpty() || textoNombreUsuario.isEmpty() -> {
+                        mensajeDatos.value =
+                            "Debes introducir dirección de email y nombre de usuario."
                         viewModelInicial.abrirCerrarMensajeDatos()
                     }
+
                     else -> {
-                        viewModelInicial.addUser(
-                            textoEmail,
-                            textoNombre,
-                            textoNombreUsuario,
-                            textoPassword
-                        )
-                        viewModelInicial.abrirCrearUsuario()
-                        navController.navigate(Ruta.Principal.ruta)
+                        if (textoPassword.length >= 6) {
+                            Firebase.auth.createUserWithEmailAndPassword(textoEmail, textoPassword)
+                                .addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        viewModelInicial.addUser(
+                                            textoEmail,
+                                            textoNombre,
+                                            textoNombreUsuario,
+                                            textoPassword
+                                        )
+                                        viewModelInicial.abrirCrearUsuario()
+                                        navController.navigate(Ruta.Principal.ruta)
+                                        Log.d(TAG, "Email sent.")
+                                    } else {
+                                        mensajeDatos.value = "El formato del email es incorrecto."
+                                        viewModelInicial.abrirCerrarMensajeDatos()
+                                    }
+                                }
+                        } else {
+                            mensajePassword.value =
+                                "La contraseña debe tener, al menos, seis caracteres."
+                            viewModelInicial.abrirCerrarMensajePassword()
+                        }
                     }
                 }
             }
         }
     }
-    if(muestraMensajePassword) dialogoAviso(viewModelInicial, "Contraseña no válida", "Las contraseñas no coinciden o no existen")  { viewModelInicial.abrirCerrarMensajePassword() }
-    if(muestraMensajeDatos) dialogoAviso(viewModelInicial, "Faltan datos", "Debes introducir dirección de email y nombre de usuario.") { viewModelInicial.abrirCerrarMensajeDatos() }
+    if (muestraMensajePassword) dialogoAviso(
+        viewModelInicial,
+        titulo = "Contraseña no válida",
+        contenido = mensajePassword.value
+    ) { viewModelInicial.abrirCerrarMensajePassword() }
+    if (muestraMensajeDatos) dialogoAviso(
+        viewModelInicial,
+        titulo = "Datos inválidos",
+        contenido = mensajeDatos.value
+    ) { viewModelInicial.abrirCerrarMensajeDatos() }
 }
 
 @Composable
-private fun dialogoIniciarSesion(viewModelInicial: ViewModelInicial, navController: NavHostController) {
-    val textoNombreUsuario = viewModelInicial.textoNombreUsuario.collectAsState().value
+private fun dialogoIniciarSesion(
+    viewModelInicial: ViewModelInicial,
+    navController: NavHostController
+) {
+    val textoEmail = viewModelInicial.textoEmail.collectAsState().value
     val textoPassword = viewModelInicial.textoPassword.collectAsState().value
-    var datosUserValidos: Int
     val muestraMensajePassword = viewModelInicial.muestraMensajePassword.collectAsState().value
+    val muestraMensajeUsuarioDesconocido =
+        viewModelInicial.muestraMensajeUsuarioDesconocido.collectAsState().value
     Dialog(
         onDismissRequest = { viewModelInicial.abrirIniciarSesion() },
         properties = DialogProperties(decorFitsSystemWindows = true)
@@ -213,28 +259,50 @@ private fun dialogoIniciarSesion(viewModelInicial: ViewModelInicial, navControll
         ) {
             (LocalView.current.parent as? DialogWindowProvider)?.window?.setDimAmount(0.05f)
             Logotipo()
-            Texto(text = "Nombre de usuario")
-            CampoDeTexto(texto = textoNombreUsuario) { nuevoTexto -> viewModelInicial.actualizaNombreUsuario(nuevoTexto) }
+            Texto(text = "Dirección de email")
+            CampoDeTexto(texto = textoEmail) { nuevoTexto ->
+                viewModelInicial.actualizaEmail(
+                    nuevoTexto
+                )
+            }
             Texto(text = "Contraseña")
-            CampoDeTexto(texto = textoPassword) { nuevoTexto -> viewModelInicial.actualizaPassword(nuevoTexto) }
-            BotonesSesion(texto1 = "Iniciar sesión", { viewModelInicial.abrirIniciarSesion() }) {
-                datosUserValidos = viewModelInicial.compruebaUsuarioExistente(textoNombreUsuario)
-                Log.d("datosUser", datosUserValidos.toString())
-                when (datosUserValidos) {
-                    1 -> {
-                        if (viewModelInicial.compruebaCredenciales(textoNombreUsuario, textoPassword)) {
-                            viewModelInicial.abrirIniciarSesion()
-                            navController.navigate(Ruta.Principal.ruta)
+            CampoDeTexto(texto = textoPassword) { nuevoTexto ->
+                viewModelInicial.actualizaPassword(
+                    nuevoTexto
+                )
+            }
+            BotonesSesion(texto1 = "Iniciar sesión", {
+                viewModelInicial.borrarCampos()
+                viewModelInicial.abrirIniciarSesion()
+            }) {
+                val esValido = viewModelInicial.compruebaUsuarioExistente(textoEmail)
+                if (esValido) {
+                    Firebase.auth.signInWithEmailAndPassword(textoEmail, textoPassword)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                viewModelInicial.abrirIniciarSesion()
+                                navController.navigate(Ruta.Principal.ruta)
+                            } else {
+                                viewModelInicial.abrirCerrarMensajePassword()
+                            }
                         }
-                    }
-                    2 -> {
-                        viewModelInicial.abrirCerrarMensajePassword()
-                    }
+                } else {
+                    viewModelInicial.abrirCerrarMensajeUsuarioDesconocido()
                 }
             }
         }
     }
-    if(muestraMensajePassword) dialogoAviso(viewModelInicial, "Contraseña no válida", "Contraseña incorrecta") { viewModelInicial.abrirCerrarMensajePassword() }
+    if (muestraMensajePassword) dialogoAviso(
+        viewModelInicial,
+        "Contraseña no válida",
+        "Contraseña incorrecta"
+    ) { viewModelInicial.abrirCerrarMensajePassword() }
+
+    if (muestraMensajeUsuarioDesconocido) dialogoAviso(
+        viewModelInicial,
+        "Usuario no válido",
+        "El nombre de usuario no dispone de cuenta."
+    ) { viewModelInicial.abrirCerrarMensajeUsuarioDesconocido() }
 }
 
 @Composable
@@ -286,7 +354,7 @@ fun Logotipo() {
 fun BotonesSesion(texto1: String, atras: () -> Unit, onClick: () -> Unit) {
     Button(
         onClick = {
-                onClick()
+            onClick()
         },
         colors = ButtonDefaults.buttonColors(colorBoton),
         shape = RoundedCornerShape(20.dp), // siguiendo las normas de material design ;)
@@ -303,7 +371,7 @@ fun BotonesSesion(texto1: String, atras: () -> Unit, onClick: () -> Unit) {
         onClick = { atras() },
         modifier = Modifier.fillMaxWidth(),
         content = {
-            Row (verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Icono volver",
@@ -328,12 +396,12 @@ private fun dialogoAviso(
 ) {
     AlertDialog(
         onDismissRequest = {
-            viewModelInicial.reiniciaValidacionDatos(0)
+            viewModelInicial.reiniciaValidacionDatos(false)
             onClick()
         },
         confirmButton = {
             Button(onClick = {
-                viewModelInicial.reiniciaValidacionDatos(0)
+                viewModelInicial.reiniciaValidacionDatos(false)
                 onClick()
             }) {
                 Text(text = "Probar de nuevo")
