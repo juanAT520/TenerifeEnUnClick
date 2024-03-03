@@ -1,15 +1,15 @@
 package com.juan.tenerifeenunclick.gui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -19,13 +19,16 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Polyline
+import com.juan.tenerifeenunclick.ui.theme.Danger
 import com.juan.tenerifeenunclick.ui.theme.colorFuente
 import com.juan.tenerifeenunclick.ui.theme.fondoTextField
 import com.juan.tenerifeenunclick.viewModel.ViewModelRutas
@@ -34,12 +37,12 @@ import com.juan.tenerifeenunclick.viewModel.ViewModelRutas
 fun PantallaRutas() {
     val viewModelRutas: ViewModelRutas = viewModel()
     val listaRutas = viewModelRutas.listaRutas.collectAsState().value
-    val listaImagenes = viewModelRutas.listaImagenes.collectAsState().value
+    val listaRecorridos = viewModelRutas.listaRecorridos.collectAsState().value
     val abierto = viewModelRutas.estaAbierto.collectAsState().value
     val muestraMedidas = viewModelRutas.muestraMedidas.collectAsState().value
     val nombreRuta = viewModelRutas.nombreRuta.collectAsState().value
     val textoDescripcion = viewModelRutas.textoDesc.collectAsState().value
-    val imagenRuta = viewModelRutas.imagenRuta.collectAsState().value
+    val mapaRecorrido = viewModelRutas.mapaRecorrido.collectAsState().value
     val altitudRuta = viewModelRutas.altitudRuta.collectAsState().value
     val distanciaRuta = viewModelRutas.distanciaRuta.collectAsState().value
     val codigoRuta = viewModelRutas.codigoRuta.collectAsState().value
@@ -87,7 +90,7 @@ fun PantallaRutas() {
                             viewModelRutas.CambiaRuta(
                                 ruta.Nombre,
                                 ruta.Descripcion,
-                                listaImagenes[index],
+                                listaRecorridos[index],
                                 ruta.AltitudMaxima,
                                 ruta.Distancia,
                                 ruta.Codigo
@@ -99,11 +102,24 @@ fun PantallaRutas() {
                 }
             }
         }
-        Image(
-            painter = painterResource(id = imagenRuta),
-            contentDescription = "Imagen $nombreRuta",
-            modifier = Modifier.clip(RoundedCornerShape(20.dp))
-        )
+        Card(
+            modifier = Modifier
+                .size(300.dp)
+                .padding(top = 40.dp)
+        ) {
+            val cameraPositionState =
+                CameraPositionState(CameraPosition(mapaRecorrido[0], 10f, 0f, 0f))
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                content = {
+                    Polyline(
+                        points = mapaRecorrido,
+                        color = Danger
+                    )
+                }
+            )
+        }
         if (muestraMedidas) {
             Text(text = "Distancia: $distanciaRuta kms",
                 fontWeight = FontWeight.Bold,
